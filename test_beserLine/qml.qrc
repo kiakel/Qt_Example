@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Test_Sankey2Pt.qml</file>
+        <file>PassengerFlowCount.qml</file>
+        <file>SingleSankeyLine.qml</file>
+    </qresource>
+</RCC>
