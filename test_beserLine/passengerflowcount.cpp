@@ -69,16 +69,15 @@ void PassengerFlowCount::selectPassengerFlow()
         auto&& oneHourAgeMap = m_ageMap.value(currentHour).toMap();
         int oneAgeRangeValue = oneHourAgeMap.value(ageArray.at(arrIndex)).toInt();
         oneHourAgeMap.insert(ageArray.at(arrIndex), static_cast<int>(std::ceilf(humanCt*percent) + oneAgeRangeValue));
-        m_ageCountMap.insert(ageArray.at(arrIndex), m_ageCountMap.value(ageArray.at(arrIndex)).toInt()
-                                                         + oneHourAgeMap.value(ageArray.at(arrIndex)).toInt());
+        qInfo()<<"insert "<<ageArray.at(arrIndex);
+        m_ageCountMap.insert(ageArray.at(arrIndex), oneHourAgeMap.value(ageArray.at(arrIndex)).toInt());
         m_ageMap.insert(currentHour, oneHourAgeMap);
 
         humanCt -= oneHourAgeMap.value(ageArray.at(arrIndex)).toInt();
         QThread::usleep(1);
     }
 
-    qInfo()<<tmpHumanCt<<","<<m_ageCountMap["20"].toInt()<<","<<m_ageCountMap["40"].toInt()<<","<<
-        m_ageCountMap["60"].toInt()<<","<<m_ageCountMap["100"].toInt();
+    qInfo()<<tmpHumanCt<<","<<m_ageCountMap;
 
     emit dataChanged();
 }

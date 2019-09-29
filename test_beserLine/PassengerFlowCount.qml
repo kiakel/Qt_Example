@@ -34,7 +34,7 @@ Item{
     }
 
     function createSankeyLine(xPos, linewidth, linecolor, leftStartY, rightEndY){
-        if (isNaN(linewidth) || linewidth === 0){
+        if (isNaN(linewidth) || linewidth === 0 || isNaN(leftStartY) || isNaN(rightEndY)){
             print("linewidth is 0")
             return null
         }
@@ -59,21 +59,47 @@ Item{
 
         paintCoor.reset()
         // 每个人在性别一列所表示的柱体高度(曲线宽度)
-        var oneHeight_sex = (height-lineInterval)/(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
-        paintCoor.femaleNextItemY = passengerFlowObj.maleCt * oneHeight_sex + lineInterval
+        var oneHeight_sex = 0
+        if (passengerFlowObj.femaleCt===0 || passengerFlowObj.maleCt===0)
+            oneHeight_sex = sankeyId.height/(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
+        else
+            oneHeight_sex = (sankeyId.height-sankeyId.lineInterval) /(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
 
-        var oneHeight_time = (height-lineInterval*7)/(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
+        paintCoor.femaleNextItemY = passengerFlowObj.maleCt === 0 ? 0 : passengerFlowObj.maleCt * oneHeight_sex + lineInterval
+
+
         var singleTimeLineEndY = 0 // 性别到时间柱体
 
-        var ageHeight = (height-lineInterval*3)/(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
+        var ageHeight = (height-lineInterval*(Object.keys(passengerFlowObj.ageCountMap).length-1))/(passengerFlowObj.femaleCt + passengerFlowObj.maleCt)
+        print("ageHeight:", ageHeight)
         var ageEndYList = []
         ageEndYList.push(0)
-        ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["20"]*ageHeight + sankeyId.lineInterval)
-        ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["40"]*ageHeight + sankeyId.lineInterval)
-        ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["60"]*ageHeight + sankeyId.lineInterval)
+        if (passengerFlowObj.ageCountMap.hasOwnProperty("20")){
+            ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["20"]*ageHeight + sankeyId.lineInterval)
+        }
+        else{
+            ageEndYList.push(ageEndYList[ageEndYList.length-1])
+        }
+
+        if (passengerFlowObj.ageCountMap.hasOwnProperty("40")){
+            ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["40"]*ageHeight + sankeyId.lineInterval)
+        }
+        else{
+            ageEndYList.push(ageEndYList[ageEndYList.length-1])
+        }
+
+        if (passengerFlowObj.ageCountMap.hasOwnProperty("60")){
+            ageEndYList.push(ageEndYList[ageEndYList.length-1] + passengerFlowObj.ageCountMap["60"]*ageHeight + sankeyId.lineInterval)
+        }
+        else{
+            ageEndYList.push(ageEndYList[ageEndYList.length-1])
+        }
+
         // 时间范围 // Object.keys(passengerFlowObj.ageMap).length
         for (var hourIndex=10; hourIndex < 22 ; ++hourIndex){
             var timeEndY = singleTimeLineEndY // 时间到年龄柱体
+            var oneHeight_time = 0
+
             var paintedHour = (hourIndex).toString() // 当前正在绘制的时间点
             var theHourMale = 0
             var theHourFemale = 0
@@ -97,26 +123,27 @@ Item{
             if (maleToTimeLineObj !== null){
                 maleToTimeLineObj.fresh()
                 singleTimeLineEndY += maleToTimeLineObj.lineWidth
-
+                oneHeight_time = (singleTimeLineEndY-timeEndY)/(theHourFemale + theHourMale)
                 paintCoor.maleNextItemY += maleToTimeLineObj.lineWidth
                 paintCoor.leftLines.push(maleToTimeLineObj)
             }
-
 
             // 女-> 时间线
             var femaleToTimeLineObj = createSankeyLine(0, theHourFemale*oneHeight_sex, "#F7517F", paintCoor.femaleNextItemY,
                                                        singleTimeLineEndY)
             if (femaleToTimeLineObj !== null){
                 femaleToTimeLineObj.fresh()
-                singleTimeLineEndY += femaleToTimeLineObj.lineWidth + lineInterval
+                singleTimeLineEndY += femaleToTimeLineObj.lineWidth
+                oneHeight_time = (singleTimeLineEndY-timeEndY)/(theHourFemale + theHourMale)
 
+                singleTimeLineEndY += lineInterval
                 paintCoor.femaleNextItemY += femaleToTimeLineObj.lineWidth
                 paintCoor.leftLines.push(femaleToTimeLineObj)
             }
 
             // {年龄
             var ageArray=["20", "40", "60", "100"]
-            var ageColor=["#FFE96C","#FFE96C", "#FF9105", "#FF9105"]
+            var ageColor=["#0080FF","#FFE96C", "#58FA58", "#FF9105"]
 
             for (var ageIndex = 0; ageIndex < ageArray.length; ++ageIndex){
 
@@ -124,8 +151,10 @@ Item{
 
                 var ageObj = createSankeyLine(sankeyId.width/2, lineWidth,
                                                    ageColor[ageIndex], timeEndY, ageEndYList[ageIndex])
-                print(ageArray[ageIndex] ,oneHeight_time, lineWidth, isNaN(lineWidth), timeEndY)
+
+                print(ageArray[ageIndex] ,oneHeight_time, lineWidth, isNaN(lineWidth), timeEndY, ageEndYList[ageIndex])
                 if (ageObj !== null){
+                    print(ageArray[ageIndex],"fresh")
                     ageObj.fresh()
                     timeEndY += lineWidth
                     ageEndYList[ageIndex] += lineWidth
